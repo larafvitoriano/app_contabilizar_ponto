@@ -48,6 +48,7 @@ class MyHomePage extends StatelessWidget {
           'Contabilizar Ponto',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       drawer: Drawer(
         child: ListView(

@@ -26,14 +26,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
+
+    const Color primaryColor = const Color(0xFF004D40);
+    const Color secondaryColor = const Color(0xFF568F80);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendário',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
       ),
       body: Padding(
@@ -64,23 +68,33 @@ class _CalendarScreenState extends State<CalendarScreen> {
             _focusedDay = focusedDay;
           },
           headerStyle: const HeaderStyle(
+            formatButtonVisible: false,
+            titleCentered: true,
             formatButtonTextStyle:
             TextStyle(color: Colors.white, fontSize: 16),
             titleTextStyle: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 20),
-            formatButtonDecoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                fontSize: 20
             ),
             leftChevronIcon:
-            Icon(Icons.chevron_left, color: Colors.blue),
+            Icon(Icons.chevron_left, color: Colors.green),
             rightChevronIcon:
-            Icon(Icons.chevron_right, color: Colors.blue),
+            Icon(Icons.chevron_right, color: Colors.green,
           ),
         ),
+          calendarStyle: const CalendarStyle(
+            todayDecoration: BoxDecoration(
+              color: primaryColor,
+              shape: BoxShape.circle,
+            ),
+            selectedDecoration: BoxDecoration(
+              color: secondaryColor,
+              shape: BoxShape.circle,
+            ),
+          ),
       ),
+    )
     );
   }
 }
