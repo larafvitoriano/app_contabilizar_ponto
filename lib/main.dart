@@ -25,6 +25,9 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: Colors.black,
           ),
+          iconTheme: const IconThemeData(
+            color: Colors.white, // cor da seta de voltar
+          ),
         ),
       ),
       home: const MyHomePage(title: 'Contabilizar Ponto'),
