@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/date_symbol_data_file.dart';
 import 'screens/calendar_screen.dart';
-
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
-    runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -12,25 +11,37 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    const Color primaryColor = const Color(0xFF004D40);
-    const Color secondaryColor = const Color(0xFF568F80);
+    const Color primaryColor = Color(0xFF004D40);
+    const Color secondaryColor = Color(0xFF568F80);
 
     return MaterialApp(
       title: 'Contabilizar Ponto',
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('pt', 'BR'),
+      ],
       theme: ThemeData(
-        primarySwatch: Colors.green,
-        appBarTheme: AppBarTheme(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primaryColor,
+          primary: primaryColor,
+          secondary: secondaryColor,
+        ),
+        appBarTheme: const AppBarTheme(
           backgroundColor: primaryColor,
-          titleTextStyle: const TextStyle(
+          titleTextStyle: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-          iconTheme: const IconThemeData(
+          iconTheme: IconThemeData(
             color: Colors.white,
           ),
         ),
+        useMaterial3: true,
       ),
       home: const MyHomePage(title: 'Contabilizar Ponto'),
     );
@@ -44,37 +55,31 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = const Color(0xFF004D40);
-    const Color secondaryColor = const Color(0xFF568F80);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Contabilizar Ponto',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(title),
       ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
             DrawerHeader(
-              decoration: BoxDecoration(color: primaryColor),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
               child: const Text(
                 'Menu',
                 style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
             ListTile(
-              leading: Icon(Icons.home, color: primaryColor),
+              leading: Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
               title: const Text('Home'),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: Icon(Icons.calendar_month, color: primaryColor),
+              leading: Icon(Icons.calendar_month, color: Theme.of(context).colorScheme.primary),
               title: const Text('Calendário'),
               onTap: () {
                 Navigator.pop(context);
@@ -110,4 +115,3 @@ class MyHomePage extends StatelessWidget {
     );
   }
 }
-
