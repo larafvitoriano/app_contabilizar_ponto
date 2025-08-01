@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "846451285437",
+    "project_id": "app-contabilizar-ponto-69f3d",
+    "storage_bucket": "app-contabilizar-ponto-69f3d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846451285437:android:d2653d40466e717c0546d4",
+        "android_client_info": {
+          "package_name": "com.residentes.app_contabilizar_ponto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz-pJiEig858RhMvI28t_R11Dc0Y-K4pg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
