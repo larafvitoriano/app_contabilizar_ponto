@@ -2,81 +2,77 @@ import 'package:app_contabilizar_ponto/database/models/tipo_atividade_enum.dart'
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Modelo de dados para um registro de ponto eletrônico.
 class PontoRegistroModel {
-  int? id; // ID único do registro (útil para banco de dados)
-  final DateTime data; // A data do registro (sem considerar a hora)
-  final TimeOfDay? horaEntrada; // Agora opcional
-  final TimeOfDay? horaSaida;   // Agora opcional
-  final double? horasTrabalhadas; // Novo campo para horas trabalhadas (opcional)
-  final TipoAtividade tipoAtividade; // Se é presencial ou aula
+  int? id;
+  final DateTime data;
+  final double horasTrabalhadas;
+  final TipoAtividade tipoAtividade;
 
   PontoRegistroModel({
     this.id,
-    required this.data,
-    this.horaEntrada,
-    this.horaSaida,
-    this.horasTrabalhadas, // Inclua no construtor
+    required DateTime data,
+    required this.horasTrabalhadas,
     required this.tipoAtividade,
   }) : assert(
-  (horaEntrada != null && horaSaida != null) || horasTrabalhadas != null,
-  'Deve fornecer hora de entrada/saída OU horas trabalhadas.',
-  ); // Adiciona uma asserção para garantir uma das opções
+  horasTrabalhadas >= 0, // Garante que horasTrabalhadas não é negativo
+  'Horas trabalhadas deve ser um valor positivo ou zero.',
+  ),
+  // Normaliza a data para apenas ano, mês e dia
+        this.data = DateTime(data.year, data.month, data.day);
 
-  /// Converte um objeto PontoRegistroModel em um Map para armazenamento (ex: banco de dados).
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'data': DateFormat('yyyy-MM-dd').format(data), // Armazenar data como string
-      'horaEntrada': horaEntrada != null ? '${horaEntrada!.hour}:${horaEntrada!.minute}' : null, // Pode ser nulo
-      'horaSaida': horaSaida != null ? '${horaSaida!.hour}:${horaSaida!.minute}' : null,       // Pode ser nulo
-      'horasTrabalhadas': horasTrabalhadas, // Armazenar o double
-      'tipoAtividade': tipoAtividade.name, // Armazenar o nome do enum como string
+      'data': data.millisecondsSinceEpoch, // Salva a data como inteiro (timestamp)
+      'horasTrabalhadas': horasTrabalhadas,
+      'tipoAtividade': tipoAtividade.name,
     };
   }
 
-  /// Cria um objeto PontoRegistroModel a partir de um Map (ex: lido do banco de dados).
   factory PontoRegistroModel.fromMap(Map<String, dynamic> map) {
-    TimeOfDay? parseTime(String? timeString) { // Retorna TimeOfDay?
-      if (timeString == null) return null;
-      final parts = timeString.split(':');
-      return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-    }
-
     return PontoRegistroModel(
-      id: map['id'],
-      data: DateTime.parse(map['data']),
-      horaEntrada: parseTime(map['horaEntrada']),
-      horaSaida: parseTime(map['horaSaida']),
-      horasTrabalhadas: map['horasTrabalhadas'] as double?, // Cast para double?
+
+      // Para 'id': Tenta parsear para int. Se for null ou não for int/string convertível, retorna null.
+      id: map['id'] != null ? int.tryParse(map['id'].toString()) : null,
+
+      // Para 'data': Tenta parsear para int. Se for null ou não for int/string convertível, retorna 0 (ou outro default seguro).
+      // A partir de millisecondsSinceEpoch cria o DateTime.
+      data: DateTime.fromMillisecondsSinceEpoch(
+        map['data'] != null ? int.tryParse(map['data'].toString()) ?? 0 : 0,
+      ),
+
+      // Para 'horasTrabalhadas': Assume que pode vir como int ou double do banco, converte para double.
+      horasTrabalhadas: (map['horasTrabalhadas'] as num).toDouble(),
+
+      // Para 'tipoAtividade': Busca pelo nome. Adiciona um fallback robusto.
+
       tipoAtividade: TipoAtividade.values.firstWhere(
             (e) => e.name == map['tipoAtividade'],
-        orElse: () => TipoAtividade.presencial, // Valor padrão se não encontrar
+        orElse: () => TipoAtividade.presencial, //
       ),
     );
   }
 
-  /// Retorna uma representação de string formatada para exibição.
+  PontoRegistroModel copyWith({
+    int? id,
+    DateTime? data,
+    double? horasTrabalhadas,
+    TipoAtividade? tipoAtividade,
+  }) {
+    return PontoRegistroModel(
+      id: id ?? this.id,
+      data: data ?? this.data,
+      horasTrabalhadas: horasTrabalhadas ?? this.horasTrabalhadas,
+      tipoAtividade: tipoAtividade ?? this.tipoAtividade,
+    );
+  }
+
   String toDisplayString(BuildContext context) {
-    String formatTime(TimeOfDay time) {
-      final now = DateTime.now();
-      final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-      return DateFormat.Hm(Localizations.localeOf(context).toString()).format(dt);
-    }
+    final int totalMinutes = (horasTrabalhadas * 60).round();
+    final int hours = totalMinutes ~/ 60;
+    final int minutes = totalMinutes % 60;
+    final String formattedTime = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
 
-    String horasInfo;
-    if (horasTrabalhadas != null) {
-      horasInfo = 'Horas Trabalhadas: ${horasTrabalhadas!.toStringAsFixed(2)}h';
-    } else if (horaEntrada != null && horaSaida != null) {
-      horasInfo = 'Entrada: ${formatTime(horaEntrada!)}\nSaída: ${formatTime(horaSaida!)}';
-    } else if (horaEntrada != null) {
-      horasInfo = 'Entrada: ${formatTime(horaEntrada!)}\nSaída: Em andamento';
-    } else {
-      horasInfo = 'Nenhuma hora registrada';
-    }
-
-    return 'Data: ${DateFormat.yMd('pt_BR').format(data)}\n'
-        '$horasInfo\n'
-        'Tipo: ${tipoAtividade.toDisplayString()}';
+    return 'Data: ${DateFormat.yMd('pt_BR').format(data)} - Atividade: ${tipoAtividade.toDisplayString()} - Horas: $formattedTime';
   }
 }
