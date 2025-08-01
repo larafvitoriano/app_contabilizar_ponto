@@ -1,3 +1,5 @@
+import 'package:app_contabilizar_ponto/widgets/auth_wrapper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'screens/calendar_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -46,7 +48,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Contabilizar Ponto'),
+      home: const AuthWrapper(),
     );
   }
 }
@@ -58,7 +60,6 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -90,6 +91,35 @@ class MyHomePage extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (context) => const CalendarScreen()),
                 );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.primary),
+              title: const Text('Sair'),
+              onTap: () async {
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Confirmar saída'),
+                    content: const Text('Tem certeza de que deseja sair da conta?'),
+                    actions: [
+                      TextButton(
+                        child: const Text('Cancelar'),
+                        onPressed: () => Navigator.of(context).pop(false),
+                      ),
+                      TextButton(
+                        child: const Text('Sair'),
+                        onPressed: () => Navigator.of(context).pop(true),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (shouldLogout == true) {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.of(context).pop(); // Fecha o Drawer
+                }
               },
             ),
           ],
