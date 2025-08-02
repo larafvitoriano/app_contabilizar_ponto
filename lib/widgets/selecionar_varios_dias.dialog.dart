@@ -5,130 +5,80 @@ import '../utils/selected_date_range.dart';
 class MultiDaySelectionDialog extends StatefulWidget {
   final DateTime initialSelectedDay;
 
-  const MultiDaySelectionDialog({
-    super.key,
-    required this.initialSelectedDay,
-  });
+  const MultiDaySelectionDialog({super.key, required this.initialSelectedDay});
 
   @override
   State<MultiDaySelectionDialog> createState() => _MultiDaySelectionDialogState();
 }
 
 class _MultiDaySelectionDialogState extends State<MultiDaySelectionDialog> {
-  DateTime? _startDate;
-  DateTime? _endDate;
-  int _totalBusinessDays = 0;
+  late DateTime _startDate;
+  late DateTime _endDate;
 
   @override
   void initState() {
     super.initState();
-    _startDate = DateTime(widget.initialSelectedDay.year, widget.initialSelectedDay.month, widget.initialSelectedDay.day);
-    _endDate = DateTime(widget.initialSelectedDay.year, widget.initialSelectedDay.month, widget.initialSelectedDay.day);
-    _totalBusinessDays = _calculateBusinessDays(_startDate!, _endDate!);
+    _startDate = widget.initialSelectedDay;
+    _endDate = widget.initialSelectedDay;
   }
 
-  /// Calcula o número de dias úteis (segunda a sexta) entre duas datas.
-  int _calculateBusinessDays(DateTime startDate, DateTime endDate) {
-    int businessDays = 0;
-
-    DateTime current = DateTime(startDate.year, startDate.month, startDate.day);
-    DateTime end = DateTime(endDate.year, endDate.month, endDate.day);
-
-    while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
-      if (current.weekday >= DateTime.monday && current.weekday <= DateTime.friday) {
-        businessDays++;
-      }
-      current = current.add(const Duration(days: 1));
-    }
-    return businessDays;
-  }
-
-  /// Abre um seletor de data e atualiza a data de início ou fim.
-  /// Garante que a data de início não seja posterior à data de fim e vice-versa.
   Future<void> _selectDate(BuildContext context, bool isStart) async {
+    final DateTime initialDate = isStart ? _startDate : _endDate;
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? _startDate! : _endDate!,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2030),
-      locale: const Locale('pt', 'BR'),
-      helpText: isStart ? 'SELECIONE A DATA DE INÍCIO' : 'SELECIONE A DATA DE FIM',
-      cancelText: 'CANCELAR',
-      confirmText: 'CONFIRMAR',
-      fieldLabelText: 'Insira a data',
-      errorFormatText: 'Formato de data inválido.',
-      errorInvalidText: 'Data fora do intervalo.',
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
     );
+
     if (picked != null) {
       setState(() {
-        final normalizedPicked = DateTime(picked.year, picked.month, picked.day);
-
         if (isStart) {
-          _startDate = normalizedPicked;
-          // Se a data de fim for anterior à nova data de início, ajusta a data de fim
-          if (_endDate!.isBefore(_startDate!)) {
-            _endDate = _startDate;
-          }
+          _startDate = picked;
+          if (_startDate.isAfter(_endDate)) _endDate = _startDate;
         } else {
-          _endDate = normalizedPicked;
-          // Se a data de início for posterior à nova data de fim, ajusta a data de início
-          if (_startDate!.isAfter(_endDate!)) {
-            _startDate = _endDate;
-          }
+          _endDate = picked;
+          if (_endDate.isBefore(_startDate)) _startDate = _endDate;
         }
-        _totalBusinessDays = _calculateBusinessDays(_startDate!, _endDate!);
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final DateFormat formatter = DateFormat('dd/MM/yyyy');
+
     return AlertDialog(
-      title: const Text('Selecionar Período de Ponto'),
+      title: const Text('Selecionar intervalo de datas'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            title: const Text('Data de Início:'),
-            subtitle: Text(DateFormat.yMd('pt_BR').format(_startDate!)),
+            title: const Text('Data inicial'),
+            subtitle: Text(formatter.format(_startDate)),
             trailing: const Icon(Icons.calendar_today),
             onTap: () => _selectDate(context, true),
           ),
           ListTile(
-            title: const Text('Data de Fim:'),
-            subtitle: Text(DateFormat.yMd('pt_BR').format(_endDate!)),
+            title: const Text('Data final'),
+            subtitle: Text(formatter.format(_endDate)),
             trailing: const Icon(Icons.calendar_today),
             onTap: () => _selectDate(context, false),
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Dias Úteis no Período: $_totalBusinessDays',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ],
-            ),
           ),
         ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(null),
+          onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop(SelectedDateRange(
-              startDate: _startDate!,
-              endDate: _endDate!,
-              totalBusinessDays: _totalBusinessDays,
-            ));
+            final result = SelectedDateRange.fromDates(_startDate, _endDate);
+            Navigator.of(context).pop(result);
           },
-          child: const Text('Continuar'),
+          child: const Text('Confirmar'),
         ),
       ],
     );

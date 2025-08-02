@@ -264,7 +264,7 @@ class _PontoRegistroDialogState extends State<PontoRegistroDialog> {
               Navigator.of(context).pop('Erro ao salvar registro: ${e.toString().split(':')[0]}');
             }
           },
-          child: const Text('Salvar'),
+          child: Text(widget.registroParaEditar != null ? 'Atualizar' : 'Salvar'),
         ),
       ],
     );

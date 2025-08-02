@@ -34,6 +34,19 @@ class PontoRecordCard extends StatelessWidget {
     final int minutes = totalMinutes % 60;
     final String formattedTime = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
 
+    Color cardColor;
+    Color textColor;
+    Color iconColor;
+
+    if (ponto.horasTrabalhadas >= 6) {
+      textColor = Colors.green.shade800;
+    } else if (ponto.horasTrabalhadas >= 0 && ponto.horasTrabalhadas <= 5) {
+      textColor = Colors.red.shade800;
+    } else {
+      textColor = Colors.grey[800]!;
+    }
+
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
       elevation: 4,
@@ -81,7 +94,7 @@ class PontoRecordCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey[800],
+                      color: textColor,
                     ),
                   ),
                 ],

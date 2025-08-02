@@ -86,15 +86,16 @@ class PontoCalendarController extends ChangeNotifier {
         _registrosDoMesFocado[normalizedDay]!.isNotEmpty;
   }
 
-  Future<void> showPontoRegisterOptions(BuildContext context, DateTime initialSelectedDay, {PontoRegistroModel? registroParaEditar}) async {
+  Future<void> showPontoRegisterOptions(
+      BuildContext context,
+      DateTime initialSelectedDay, {
+        PontoRegistroModel? registroParaEditar,
+      }) async {
     SelectedDateRange? selectedRange;
 
     if (registroParaEditar != null) {
-      selectedRange = SelectedDateRange(
-        startDate: registroParaEditar.data,
-        endDate: registroParaEditar.data,
-        totalBusinessDays: (registroParaEditar.data.weekday >= DateTime.monday && registroParaEditar.data.weekday <= DateTime.friday) ? 1 : 0,
-      );
+      // Usa factory fromDates para manter consistência
+      selectedRange = SelectedDateRange.fromDates(registroParaEditar.data, registroParaEditar.data);
     } else {
       selectedRange = await showDialog<SelectedDateRange>(
         context: context,
@@ -102,37 +103,48 @@ class PontoCalendarController extends ChangeNotifier {
           return MultiDaySelectionDialog(initialSelectedDay: initialSelectedDay);
         },
       );
+
+      if (selectedRange == null) return;
+
+      // Validação: garantir no máximo 2 registros por dia útil no intervalo
+      final DateTime start = selectedRange.startDate;
+      final DateTime end = selectedRange.endDate;
+
+      DateTime current = start;
+      while (!current.isAfter(end)) {
+        if (current.weekday >= DateTime.monday && current.weekday <= DateTime.friday) {
+          final registros = await _pontoRepository.getPontosByDate(current);
+          if (registros.length >= 2) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Já existem 2 registros no dia ${current.day}/${current.month}/${current.year}.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+        }
+        current = current.add(const Duration(days: 1));
+      }
     }
 
-    if (selectedRange != null) {
-      final DateTime startDate = selectedRange.startDate;
-      final DateTime endDate = selectedRange.endDate;
-      final int totalBusinessDays = selectedRange.totalBusinessDays;
 
-      PontoRegistroModel? finalRegistroParaEditar = registroParaEditar;
-      if (finalRegistroParaEditar == null && startDate.isAtSameMomentAs(endDate)) {
-        final existingRecords = await _pontoRepository.getPontosByDate(startDate);
-        if (existingRecords.isNotEmpty) {
-          finalRegistroParaEditar = existingRecords.first;
-        }
-      }
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (context) => PontoRegistroDialog(
+        startDate: selectedRange!.startDate!,
+        endDate: selectedRange!.endDate!,
+        registroParaEditar: registroParaEditar,
+        pontoRepository: _pontoRepository,
+        totalBusinessDays: selectedRange.totalBusinessDays,
+      ),
+    );
 
-      final result = await showDialog<String?>(
-        context: context,
-        builder: (context) => PontoRegistroDialog(
-          startDate: startDate,
-          endDate: endDate,
-          registroParaEditar: finalRegistroParaEditar,
-          pontoRepository: _pontoRepository,
-          totalBusinessDays: totalBusinessDays,
-        ),
-      );
 
-      if (result != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
-        _carregarRegistrosDoDia(_selectedDay ?? _focusedDay);
-        _loadAllRecordsForMonth(_focusedDay);
-      }
+    if (result != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+      _carregarRegistrosDoDia(_selectedDay ?? _focusedDay);
+      _loadAllRecordsForMonth(_focusedDay);
     }
   }
 
